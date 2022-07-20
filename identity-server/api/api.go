@@ -13,6 +13,10 @@ type API struct {
 	mux     *chi.Mux
 }
 
+func (api *API) ListenAndServe() error {
+	return nil
+}
+
 func NewAPI(config *config.Config) (*API, error) {
 	userRep, err := storage.NewUserRepository(config)
 	if err != nil {
