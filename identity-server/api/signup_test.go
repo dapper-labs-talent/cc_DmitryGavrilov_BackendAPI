@@ -13,19 +13,19 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type TestSuite struct {
+type TestSignUpSuite struct {
 	suite.Suite
 	api *API
 }
 
-func (s *TestSuite) SetupSuite() {
+func (s *TestSignUpSuite) SetupSuite() {
 	config := config.CreateTestConfiguration()
 	api, _ := NewAPI(config)
 	s.api = api
 }
 
-func TestTakeTestSuite(t *testing.T) {
-	suite.Run(t, &TestSuite{})
+func TestSignUpTestSuite(t *testing.T) {
+	suite.Run(t, &TestSignUpSuite{})
 }
 
 func createSignUp(firstname, lastname, email, password string) *UserSignUp {
@@ -37,9 +37,9 @@ func createSignUp(firstname, lastname, email, password string) *UserSignUp {
 	}
 }
 
-func convert(user *UserSignUp) (*bytes.Buffer, error) {
+func convert(data interface{}) (*bytes.Buffer, error) {
 	var buf bytes.Buffer
-	err := json.NewEncoder(&buf).Encode(user)
+	err := json.NewEncoder(&buf).Encode(data)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func convert(user *UserSignUp) (*bytes.Buffer, error) {
 	return &buf, nil
 }
 
-func (s *TestSuite) TestSignUp_ValidaUser_Ok_Expected() {
+func (s *TestSignUpSuite) TestSignUp_ValidaUser_Ok_Expected() {
 	w := httptest.NewRecorder()
 	user := createSignUp("test_first_name", "test_last_name", "good@gmail.com", "123")
 	buffer, err := convert(user)
@@ -67,9 +67,11 @@ func (s *TestSuite) TestSignUp_ValidaUser_Ok_Expected() {
 	s.Assert().Nil(err)
 	s.Assert().Equal(http.StatusOK, signUpResponse.Code)
 	s.Assert().NotEmpty(signUpResponse.Token)
+
+	assertToken(s.Assert(), signUpResponse.Token, user.Email, s.api.config.Secret)
 }
 
-func (s *TestSuite) TestSignUp_EmptyPassword_BadRequest_Expected() {
+func (s *TestSignUpSuite) TestSignUp_EmptyPassword_BadRequest_Expected() {
 	w := httptest.NewRecorder()
 	user := createSignUp("test_first_name", "test_last_name", "good@gmail.com", "")
 	buffer, err := convert(user)
@@ -94,7 +96,7 @@ func (s *TestSuite) TestSignUp_EmptyPassword_BadRequest_Expected() {
 	s.Assert().Equal("to create a new user, the password must not be empty", errorResponse.ErrorMessage)
 }
 
-func (s *TestSuite) TestSignUp_BadEmailFormat_BadRequest_Expected() {
+func (s *TestSignUpSuite) TestSignUp_BadEmailFormat_BadRequest_Expected() {
 
 	w := httptest.NewRecorder()
 	user := createSignUp("test_first_name", "test_last_name", "bademail", "123")

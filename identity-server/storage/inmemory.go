@@ -33,6 +33,15 @@ func (r *inMemoryUserRepository) GetUsers() (*[]model.User, error) {
 	return nil, nil
 }
 
+func (r *inMemoryUserRepository) GetUserWithEmail(email string) (*model.User, error) {
+	if r.users == nil {
+		return nil, errors.New("user repository has an invalid state, please use a NewUserRepository function to create it")
+	}
+
+	user, _ := r.users[email]
+	return &user, nil
+}
+
 func (r *inMemoryUserRepository) UpdateUser() error {
 	return nil
 }

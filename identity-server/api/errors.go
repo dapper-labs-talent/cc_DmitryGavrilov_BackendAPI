@@ -21,3 +21,7 @@ func badRequestError(message string) *HttpErrorResponse {
 func internalServerError(message string) *HttpErrorResponse {
 	return &HttpErrorResponse{Code: http.StatusInternalServerError, ErrorMessage: message}
 }
+
+func unauthorizedError(message string) *HttpErrorResponse {
+	return &HttpErrorResponse{Code: http.StatusUnauthorized, ErrorMessage: message}
+}

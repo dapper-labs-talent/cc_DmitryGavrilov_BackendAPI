@@ -8,6 +8,7 @@ import (
 type UserRepository interface {
 	Insert(*model.User) error
 	GetUsers() (*[]model.User, error)
+	GetUserWithEmail(email string) (*model.User, error)
 	UpdateUser() error
 }
 
