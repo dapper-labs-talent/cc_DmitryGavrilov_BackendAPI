@@ -27,18 +27,18 @@ func NewAPI(config *config.Config) (*API, error) {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Logger)
 
-	router.Route("/v1", func(r chi.Router) {
-		// POST signup
-		// GET users
-		// POST login
-		// PUT users
-	})
-
 	api := &API{
 		userRep: userRep,
 		config:  config,
 		mux:     router,
 	}
+
+	router.Route("/v1", func(r chi.Router) {
+		r.Post("signup", handler(api.SignUp))
+		r.Post("login", handler(api.Login))
+		r.Get("users", handler(api.GetUsers))
+		r.Put("users", handler(api.UpdateUser))
+	})
 
 	return api, nil
 }
