@@ -14,22 +14,23 @@ const (
 
 type Config struct {
 	Server
-	Postgres
+	Database
 	JWT
 	Logging
 }
 
 type JWT struct {
-	Exp        int    `mapstructure:"jwt_expiration"`
-	SignSecret string `mapstructure:"jwt_secret, required"`
+	Expiration int    `mapstructure:"jwt_expiration"`
+	Secret     string `mapstructure:"jwt_secret, required"`
 }
 
-type Postgres struct {
-	Host     string `mapstructure:"postgres_host"`
-	Database string `mapstructure:"postgres_database"`
-	Port     int    `mapstructure:"postgres_port"`
-	User     string `mapstructure:"postgres_user"`
-	Password string `mapstructure:"postgres_password"`
+type Database struct {
+	Driver   string `mapstructure:"db_driver"`
+	Host     string `mapstructure:"db_host"`
+	DbName   string `mapstructure:"db_name"`
+	Port     int    `mapstructure:"db_port"`
+	User     string `mapstructure:"db_user"`
+	Password string `mapstructure:"db_password"`
 }
 
 type Server struct {
