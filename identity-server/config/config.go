@@ -9,6 +9,7 @@ import (
 const (
 	DefaultLogLevel      = 3     // INFO log level
 	DefaultJWTExpiration = 86400 // 1 day in seconds
+	DefaultListenPort    = 8080
 )
 
 type Config struct {
@@ -19,13 +20,20 @@ type Config struct {
 }
 
 type JWT struct {
-	Exp int `mapstructure:"jwt_expiration"`
+	Exp        int    `mapstructure:"jwt_expiration"`
+	SignSecret string `mapstructure:"jwt_secret, required"`
 }
 
 type Postgres struct {
+	Host     string `mapstructure:"postgres_host"`
+	Database string `mapstructure:"postgres_database"`
+	Port     int    `mapstructure:"postgres_port"`
+	User     string `mapstructure:"postgres_user"`
+	Password string `mapstructure:"postgres_password"`
 }
 
 type Server struct {
+	ListenPort int `mapstructure:"listen_port"`
 }
 
 type Logging struct {
@@ -61,4 +69,5 @@ func init() {
 
 	viper.SetDefault("log_level", DefaultLogLevel)
 	viper.SetDefault("jwt_expiration", DefaultJWTExpiration)
+	viper.SetDefault("listen_port", DefaultListenPort)
 }
