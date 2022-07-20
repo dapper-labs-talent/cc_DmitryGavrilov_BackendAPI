@@ -1,10 +1,33 @@
 package model
 
+import "golang.org/x/crypto/bcrypt"
+
 type User struct {
-	Email string
-	// TODO add fields
+	ID           int64  `pg:",pk"`
+	Email        string `json:"email" pg:",unique"`
+	PasswordHash string `json:"-" pg:"password_hash"`
+	Firstname    string `json:"firstname"`
+	Lastname     string `json:"lastname"`
 }
 
 func NewUser(firstname string, lastname string, email string, password string) (*User, error) {
-	return nil, nil
+	ph, err := hashPassword(password)
+	if err != nil {
+		return nil, err
+	}
+
+	user := &User{
+		Firstname:    firstname,
+		Lastname:     lastname,
+		Email:        email,
+		PasswordHash: ph,
+	}
+	return user, nil
+}
+func hashPassword(password string) (string, error) {
+	pw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(pw), nil
 }

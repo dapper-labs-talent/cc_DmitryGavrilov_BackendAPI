@@ -20,7 +20,7 @@ func NewUserRepository(config *config.Config) (UserRepository, error) {
 }
 
 func createInMemoryRepo() (UserRepository, error) {
-	return &inMemoryUserRepository{}, nil
+	return &inMemoryUserRepository{users: make(map[string]model.User)}, nil
 }
 
 func createDBRepo(config *config.Config) (UserRepository, error) {

@@ -2,25 +2,16 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/dapper-labs/identity-server/config"
 	"github.com/stretchr/testify/suite"
 )
-
-// import (
-// 	"code_signal_rate_limiter/internal/config"
-// 	"code_signal_rate_limiter/internal/ratelimitter"
-// 	"fmt"
-// 	"io/ioutil"
-// 	"net/http"
-// 	"net/http/httptest"
-// 	"testing"
-// 	"time"
-
-// 	"github.com/gin-gonic/gin"
-// 	"github.com/stretchr/testify/suite"
-// )
 
 type TestSuite struct {
 	suite.Suite
@@ -30,115 +21,101 @@ type TestSuite struct {
 func (s *TestSuite) SetupSuite() {
 	config := config.CreateTestConfiguration()
 	api, _ := NewAPI(config)
-	return &TestSuite{
-		api: api,
-	}
-
+	s.api = api
 }
 
 func TestTakeTestSuite(t *testing.T) {
 	suite.Run(t, &TestSuite{})
 }
 
-// func (s *TakeTestSuite) SetupSuite() {
-// 	s.router = gin.Default()
+func createSignUp(firstname, lastname, email, password string) *UserSignUp {
+	return &UserSignUp{
+		Firstname: firstname,
+		Lastname:  lastname,
+		Email:     email,
+		Password:  password,
+	}
+}
 
-// 	config := config.CreateTestConfigWithEndpoints()
-// 	s.rateApi, _ = NewRateLimitterAPI(config)
+func convert(user *UserSignUp) (*bytes.Buffer, error) {
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(user)
+	if err != nil {
+		return nil, err
+	}
 
-// 	v1 := s.router.Group("/v1")
-// 	addV1Routes(v1, config, s.rateApi)
-// }
+	return &buf, nil
+}
 
-// type TakeTestSuite struct {
-// 	suite.Suite
-// 	router  *gin.Engine
-// 	rateApi *RateLimitterAPI
-// }
+func (s *TestSuite) TestSignUp_ValidaUser_Ok_Expected() {
+	w := httptest.NewRecorder()
+	user := createSignUp("test_first_name", "test_last_name", "good@gmail.com", "123")
+	buffer, err := convert(user)
+	s.Assert().Nil(err)
+	req, _ := http.NewRequest(http.MethodPost, "/v1/signup", buffer)
+	req.Header.Set(HeaderContentType, ContentTypeJSON)
+	s.api.mux.ServeHTTP(w, req)
 
-// func TestTakeTestSuite(t *testing.T) {
-// 	suite.Run(t, &TakeTestSuite{})
-// }
+	s.Assert().Equal(http.StatusOK, w.Result().StatusCode)
 
-// func (s *TakeTestSuite) SetupSuite() {
-// 	s.router = gin.Default()
+	respBody, err := ioutil.ReadAll(w.Result().Body)
+	s.Assert().Nil(err)
 
-// 	config := config.CreateTestConfigWithEndpoints()
-// 	s.rateApi, _ = NewRateLimitterAPI(config)
+	signUpResponse := UserSignUpResponse{}
+	err = json.Unmarshal(respBody, &signUpResponse)
 
-// 	v1 := s.router.Group("/v1")
-// 	addV1Routes(v1, config, s.rateApi)
-// }
+	s.Assert().Nil(err)
+	s.Assert().Equal(http.StatusOK, signUpResponse.Code)
+	s.Assert().NotEmpty(signUpResponse.Token)
+}
 
-// func (s *TakeTestSuite) TestTakeGetRespondsWithGetUsers200() {
-// 	// Endpoint: "GET /user/:id",
-// 	// Burst : 10,
-// 	// Sustained : 30,
-// 	burst := 10
-// 	sustained := 30
-// 	url := "/v1/take/get/user/123"
-// 	sendTestRequests(s, burst, sustained, url)
-// }
+func (s *TestSuite) TestSignUp_EmptyPassword_BadRequest_Expected() {
+	w := httptest.NewRecorder()
+	user := createSignUp("test_first_name", "test_last_name", "good@gmail.com", "")
+	buffer, err := convert(user)
+	s.Assert().Nil(err)
+	req, _ := http.NewRequest(http.MethodPost, "/v1/signup", buffer)
+	req.Header.Set(HeaderContentType, ContentTypeJSON)
+	s.api.mux.ServeHTTP(w, req)
 
-// func (s *TakeTestSuite) TestTakeGetRespondsWithPatchUsers200() {
-// 	// Endpoint: "PATCH /user/:id",
-// 	// Burst : 5,
-// 	// Sustained : 30,
-// 	burst := 5
-// 	sustained := 30
-// 	url := "/v1/take/patch/user/123"
-// 	sendTestRequests(s, burst, sustained, url)
-// }
+	s.Assert().Equal(http.StatusBadRequest, w.Result().StatusCode)
 
-// func (s *TakeTestSuite) TestTakeGetRespondsPostUserInfo200() {
-// 	//Endpoint: "POST /userinfo",
-// 	//Burst : 5,
-// 	//Sustained : 60,
-// 	burst := 5
-// 	sustained := 60
-// 	url := "/v1/take/post/userinfo"
-// 	sendTestRequests(s, burst, sustained, url)
-// }
+	respBody, err := ioutil.ReadAll(w.Result().Body)
+	s.Assert().Nil(err)
 
-// func sendTestRequests(s *TakeTestSuite, burst int, sustained int, url string) {
-// 	template := `{"allow":%t,"code":200,"tokens":%d}`
-// 	configuredLimit := ratelimitter.EveryMinute(float64(sustained))
-// 	tokens := burst
+	errorResponse := HttpErrorResponse{}
+	err = json.Unmarshal(respBody, &errorResponse)
 
-// 	startTime := time.Now()
+	s.Assert().Nil(err)
+	s.Assert().Equal(http.StatusBadRequest, errorResponse.Code)
 
-// 	for i := 0; i < 20; i++ {
-// 		w := httptest.NewRecorder()
-// 		req, _ := http.NewRequest(http.MethodGet, url, nil)
-// 		s.router.ServeHTTP(w, req)
+	// due to limited time, I am going to match the exact string, however it would be good to define an error code that will
+	// will be associated with an email validation error type
+	s.Assert().Equal("to create a new user, the password must not be empty", errorResponse.ErrorMessage)
+}
 
-// 		s.Assert().Equal(http.StatusOK, w.Result().StatusCode)
+func (s *TestSuite) TestSignUp_BadEmailFormat_BadRequest_Expected() {
 
-// 		responseBody, err := ioutil.ReadAll(w.Result().Body)
-// 		s.Assert().NoError(err)
+	w := httptest.NewRecorder()
+	user := createSignUp("test_first_name", "test_last_name", "bademail", "123")
+	buffer, err := convert(user)
+	s.Assert().Nil(err)
+	req, _ := http.NewRequest(http.MethodPost, "/v1/signup", buffer)
+	req.Header.Set(HeaderContentType, ContentTypeJSON)
+	s.api.mux.ServeHTTP(w, req)
 
-// 		expected := ""
+	s.Assert().Equal(http.StatusBadRequest, w.Result().StatusCode)
 
-// 		now := time.Now()
-// 		earned := int(configuredLimit.TokensFromTime(now.Sub(startTime)))
+	respBody, err := ioutil.ReadAll(w.Result().Body)
+	s.Assert().Nil(err)
 
-// 		if tokens > 0 || earned > 0 {
-// 			if earned > 0 {
-// 				tokens += earned
-// 				startTime = now
-// 			}
-// 			tokens--
-// 			expected = fmt.Sprintf(template, true, tokens)
-// 		} else {
-// 			expected = fmt.Sprintf(template, false, 0)
-// 			tokens = 0
-// 		}
+	errorResponse := HttpErrorResponse{}
+	err = json.Unmarshal(respBody, &errorResponse)
 
-// 		s.Assert().Equal(expected, string(responseBody))
+	s.Assert().Nil(err)
+	s.Assert().Equal(http.StatusBadRequest, errorResponse.Code)
 
-// 		// let's give some time to earn a few tokens
-// 		if i == 15 {
-// 			time.Sleep(2 * time.Second)
-// 		}
-// 	}
-// }
+	// due to limited time, I am going to match the exact string, however it would be good to define an error code that will
+	// will be associated with an email validation error type
+	s.Assert().Equal("the provided email has incorrect format", errorResponse.ErrorMessage)
+}

@@ -51,7 +51,7 @@ func unwrapErrorResponse(err error, w http.ResponseWriter, r *http.Request) {
 		{
 			w.WriteHeader(http.StatusInternalServerError)
 			errorData := []byte(`{
-				"code":500, "message":"Internal server error"
+				"code":500, "errorMessage":"Internal server error"
 			}`)
 			_, err := w.Write(errorData)
 			if err != nil {

@@ -35,6 +35,7 @@ type Database struct {
 
 type Server struct {
 	ListenPort int `mapstructure:"listen_port"`
+	Timeout    int `mapstructure:"shutdown_timeout"`
 }
 
 type Logging struct {

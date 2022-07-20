@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dapper-labs/identity-server/mail"
 	"github.com/dapper-labs/identity-server/model"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -18,6 +19,7 @@ type UserSignUp struct {
 }
 
 type UserSignUpResponse struct {
+	Code  int    `json:"code"`
 	Token string `json:"token"`
 }
 
@@ -34,7 +36,10 @@ func (api *API) SignUp(w http.ResponseWriter, r *http.Request) error {
 		return badRequestError("to create a new user, the password must not be empty")
 	}
 
-	//TODO validate email using regexp
+	err = mail.Validate(userSignup.Email)
+	if err != nil {
+		return badRequestError("the provided email has incorrect format")
+	}
 
 	user, err := model.NewUser(userSignup.Firstname, userSignup.Lastname, userSignup.Email, userSignup.Password)
 	if err != nil {
@@ -51,6 +56,6 @@ func (api *API) SignUp(w http.ResponseWriter, r *http.Request) error {
 	nsecs := time.Second * 60 * time.Duration(api.config.Expiration)
 	token, err := newJwtToken(user, nsecs, api.config.JWT.Secret)
 
-	err = writeJSON(w, http.StatusOK, UserSignUpResponse{Token: token})
+	err = writeJSON(w, http.StatusOK, UserSignUpResponse{Token: token, Code: http.StatusOK})
 	return err
 }
