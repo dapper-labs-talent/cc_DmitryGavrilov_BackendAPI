@@ -9,7 +9,7 @@ type UserRepository interface {
 	Insert(*model.User) error
 	GetUsers() (*[]model.User, error)
 	GetUserWithEmail(email string) (*model.User, error)
-	UpdateUser() error
+	UpdateUserWithEmail(*model.UpdateUser, string) error
 }
 
 func NewUserRepository(config *config.Config) (UserRepository, error) {

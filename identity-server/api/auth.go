@@ -1,31 +1,36 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strings"
 )
 
-func (api *API) BearerAuth(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// we should expect to get a token value passed in the x-authentication-token header (according to test task description)
-		stoken := r.Header.Get("X-Authentication-Token")
-		if stoken == "" {
-			stoken = extractBearerToken(r.Header.Get("Authorization"))
-		}
+const (
+	jwtContextKey = "jwtToken"
+)
 
-		if stoken == "" {
-			bearerAuthFailed(w)
-			return
-		}
+func (api *API) TokenAuth(w http.ResponseWriter, r *http.Request) (context.Context, error) {
 
-		token, err := api.parseJwtToken(stoken)
-		if err != nil || !token.Valid {
-			bearerAuthFailed(w)
-			return
-		}
+	stoken := r.Header.Get("X-Authentication-Token")
+	if stoken == "" {
+		stoken = extractBearerToken(r.Header.Get("Authorization"))
+	}
 
-		next.ServeHTTP(w, r)
-	})
+	if stoken == "" {
+		return nil, unauthorizedError("authorization failed, token is missing")
+	}
+
+	token, err := api.parseJwtToken(stoken)
+	if err != nil {
+		return nil, unauthorizedError("authorization failed, reading token failed")
+	}
+
+	if !token.Valid {
+		return nil, unauthorizedError("authorization failed, token is invalid")
+	}
+	ctx := r.Context()
+	return context.WithValue(ctx, jwtContextKey, token), nil
 }
 
 func extractBearerToken(headerValue string) string {

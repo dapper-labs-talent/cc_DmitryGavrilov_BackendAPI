@@ -152,7 +152,7 @@ func assertToken(a *assert.Assertions, api *API, token, expectedEmail string) {
 	a.NotNil(token)
 	a.True(jtoken.Valid)
 
-	claims, ok := jtoken.Claims.(*jwtToken)
+	claims, ok := jtoken.Claims.(*jwtTokenClaims)
 	a.True(ok)
 	a.Equal(expectedEmail, claims.Email)
 }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/dapper-labs/identity-server/config"
+	"github.com/dapper-labs/identity-server/model"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -70,9 +72,18 @@ func (s *TestUsersSuite) TestGetUsers_ValidBearerToken_200_Expected() {
 }
 
 func (s *TestUsersSuite) TestGetUsers_NoToken_401_Expected() {
-	loginResponse := loginRequest("1test_email@fake.com", "pwd1", s.api.mux)
-	s.Assert().Equal(http.StatusOK, loginResponse.StatusCode)
-	respBody, err := ioutil.ReadAll(loginResponse.Body)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/v1/users", nil)
+
+	s.api.mux.ServeHTTP(w, req)
+	getUsersResponse := w.Result()
+	s.Assert().Equal(http.StatusUnauthorized, getUsersResponse.StatusCode)
+}
+
+func (s *TestUsersSuite) TestUpdateUser_200_Expected() {
+	resp := loginRequest("1test_email@fake.com", "pwd1", s.api.mux)
+	s.Assert().Equal(http.StatusOK, resp.StatusCode)
+	respBody, err := ioutil.ReadAll(resp.Body)
 	s.Assert().Nil(err)
 
 	userLoginResponse := UserLoginResponse{}
@@ -82,11 +93,49 @@ func (s *TestUsersSuite) TestGetUsers_NoToken_401_Expected() {
 	s.Assert().NotEmpty(userLoginResponse.Token)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, "/v1/users", nil)
+
+	updateUser := []byte(`
+		{
+			"firstName" : "The new firstname",
+			"lastname" : "The new lastname"
+		}
+	`)
+
+	req, _ := http.NewRequest(http.MethodPut, "/v1/users", bytes.NewBuffer(updateUser))
+	req.Header.Set("Authorization", "Bearer "+userLoginResponse.Token)
+	s.api.mux.ServeHTTP(w, req)
+
+	updateUserResponse := w.Result()
+	s.Assert().Equal(http.StatusOK, updateUserResponse.StatusCode)
+
+	respBody, err = ioutil.ReadAll(w.Result().Body)
+	s.Assert().Nil(err)
+
+	user := model.User{}
+	err = json.Unmarshal(respBody, &user)
+	s.Assert().Nil(err)
+
+	s.Assert().Equal("The new firstname", user.Firstname)
+	s.Assert().Equal("The new lastname", user.Lastname)
+	s.Assert().Empty(user.PasswordHash)
+	s.Assert().Equal("1test_email@fake.com", user.Email)
+}
+
+func (s *TestUsersSuite) TestUpdateUser_NoToken_401_Expected() {
+	w := httptest.NewRecorder()
+
+	updateUser := []byte(`
+		{
+			"firstName" : "The new firstname",
+			"lastname" : "The new lastname"
+		}
+	`)
+
+	req, _ := http.NewRequest(http.MethodPut, "/v1/users", bytes.NewBuffer(updateUser))
 
 	s.api.mux.ServeHTTP(w, req)
-	getUsersResponse := w.Result()
-	s.Assert().Equal(http.StatusUnauthorized, getUsersResponse.StatusCode)
+	updateUserResponse := w.Result()
+	s.Assert().Equal(http.StatusUnauthorized, updateUserResponse.StatusCode)
 }
 
 func getAndAssertUsers(guard assert.Assertions, api *chi.Mux, headerName, headerValue string) {

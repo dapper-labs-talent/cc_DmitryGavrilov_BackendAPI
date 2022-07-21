@@ -1,13 +1,15 @@
 package api
 
 import (
+	"context"
+	"errors"
 	"time"
 
 	"github.com/dapper-labs/identity-server/model"
 	"github.com/golang-jwt/jwt/v4"
 )
 
-type jwtToken struct {
+type jwtTokenClaims struct {
 	jwt.StandardClaims
 	Email string
 }
@@ -15,7 +17,7 @@ type jwtToken struct {
 func (api *API) parseJwtToken(token string) (*jwt.Token, error) {
 
 	p := jwt.Parser{ValidMethods: []string{jwt.SigningMethodHS256.Name}}
-	ptoken, err := p.ParseWithClaims(token, &jwtToken{}, func(token *jwt.Token) (interface{}, error) {
+	ptoken, err := p.ParseWithClaims(token, &jwtTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(api.config.JWT.Secret), nil
 	})
 	if err != nil {
@@ -26,7 +28,7 @@ func (api *API) parseJwtToken(token string) (*jwt.Token, error) {
 }
 
 func newJwtToken(user *model.User, expiration time.Duration, secret string) (string, error) {
-	claims := &jwtToken{
+	claims := &jwtTokenClaims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(expiration).Unix(),
 		},
@@ -35,4 +37,27 @@ func newJwtToken(user *model.User, expiration time.Duration, secret string) (str
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secret))
+}
+
+func getClaims(context context.Context) (*jwtTokenClaims, error) {
+	token := getJwtToken(context)
+	if token == nil {
+		return nil, errors.New("cannot find token")
+	}
+
+	claims, ok := token.Claims.(*jwtTokenClaims)
+	if !ok {
+		return nil, errors.New("cannot read jwt token claims")
+	}
+
+	return claims, nil
+}
+
+func getJwtToken(ctx context.Context) *jwt.Token {
+	token := ctx.Value(jwtContextKey)
+	if token == nil {
+		return nil
+	}
+
+	return token.(*jwt.Token)
 }

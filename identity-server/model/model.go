@@ -10,6 +10,11 @@ type User struct {
 	Lastname     string `json:"lastname"`
 }
 
+type UpdateUser struct {
+	Firstname string `json:"firstname"`
+	Lastname  string `json:"lastname"`
+}
+
 func (u *User) Challenge(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password))
 	return err == nil

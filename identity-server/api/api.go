@@ -85,7 +85,7 @@ func NewAPI(config *config.Config) (*API, error) {
 		r.Post("/login", handler(api.Login))
 
 		r.Route("/users", func(r chi.Router) {
-			r.Use(api.BearerAuth)
+			r.Use(identityMiddleware(api.TokenAuth))
 			r.Get("/", handler(api.GetUsers))
 			r.Put("/", handler(api.UpdateUser))
 		})

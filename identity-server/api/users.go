@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/dapper-labs/identity-server/model"
@@ -13,6 +14,7 @@ type GetUsersResponse struct {
 }
 
 func (api *API) GetUsers(w http.ResponseWriter, r *http.Request) error {
+
 	users, err := api.userRep.GetUsers()
 	if err != nil {
 		logrus.Error(errors.Wrap(err, "could not get the users from an user repository"))
@@ -27,5 +29,32 @@ func (api *API) GetUsers(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (api *API) UpdateUser(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	claims, err := getClaims(r.Context())
+	if err != nil {
+		return unauthorizedError("user is not authorized to process this request")
+	}
+	updateUser := model.UpdateUser{}
+
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&updateUser)
+	if err != nil {
+		logrus.Error(errors.Wrap(err, "failed to decode request body"))
+		return badRequestError("could not read received update userinformation")
+	}
+
+	err = api.userRep.UpdateUserWithEmail(&updateUser, claims.Email)
+	if err != nil {
+		return internalServerError("cannote update user, please contact administrator")
+	}
+
+	user, err := api.userRep.GetUserWithEmail(claims.Email)
+	if err != nil {
+		return internalServerError("cannot get just updated user")
+	}
+	err = writeJSON(w, http.StatusOK, user)
+	if err != nil {
+		logrus.Error(errors.Wrap(err, "could not write response"))
+	}
+	return err
+
 }
