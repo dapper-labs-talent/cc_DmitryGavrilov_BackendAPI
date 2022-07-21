@@ -153,10 +153,10 @@ func getAndAssertUsers(guard assert.Assertions, api *chi.Mux, headerName, header
 	getUsersResp := GetUsersResponse{}
 	err = json.Unmarshal(respBody, &getUsersResp)
 	guard.Nil(err)
-	guard.Equal(5, len(*getUsersResp.Users))
+	guard.Equal(5, len(getUsersResp.Users))
 
 	usedEmails := make(map[string]bool)
-	for _, user := range *getUsersResp.Users {
+	for _, user := range getUsersResp.Users {
 		guard.Empty(user.PasswordHash)
 
 		_, used := usedEmails[user.Email]

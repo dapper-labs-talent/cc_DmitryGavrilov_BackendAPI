@@ -10,7 +10,7 @@ import (
 )
 
 type GetUsersResponse struct {
-	Users *[]model.User `json:"users"`
+	Users []model.User `json:"users,omitempty"`
 }
 
 func (api *API) GetUsers(w http.ResponseWriter, r *http.Request) error {
@@ -21,7 +21,12 @@ func (api *API) GetUsers(w http.ResponseWriter, r *http.Request) error {
 		return internalServerError("an error occurred while processing your request, please contact an administrator")
 	}
 
-	err = writeJSON(w, http.StatusOK, GetUsersResponse{Users: users})
+	response := GetUsersResponse{}
+	if users != nil {
+		response.Users = *users
+	}
+
+	err = writeJSON(w, http.StatusOK, response)
 	if err != nil {
 		logrus.Error(errors.Wrap(err, "could not write response"))
 	}
@@ -44,12 +49,12 @@ func (api *API) UpdateUser(w http.ResponseWriter, r *http.Request) error {
 
 	err = api.userRep.UpdateUserWithEmail(&updateUser, claims.Email)
 	if err != nil {
-		return internalServerError("cannote update user, please contact administrator")
+		return internalServerError("cannot update user, please contact administrator")
 	}
 
 	user, err := api.userRep.GetUserWithEmail(claims.Email)
 	if err != nil {
-		return internalServerError("cannot get just updated user")
+		return internalServerError("cannot update user, please contact administrator")
 	}
 	err = writeJSON(w, http.StatusOK, user)
 	if err != nil {
