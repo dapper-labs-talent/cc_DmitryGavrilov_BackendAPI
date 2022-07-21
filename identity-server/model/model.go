@@ -1,13 +1,19 @@
 package model
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"time"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 type User struct {
-	ID           int64  `json:"-" pg:",pk"`
-	Email        string `json:"email" pg:",unique"`
-	PasswordHash string `json:"-" pg:"password_hash"`
-	Firstname    string `json:"firstname"`
-	Lastname     string `json:"lastname"`
+	ID           int64     `json:"-" pg:",pk"`
+	Email        string    `sql:"unique:email"`
+	PasswordHash string    `pg:"password_hash" json:"-"`
+	Firstname    string    `json:"firstname"`
+	Lastname     string    `json:"lastname"`
+	CreatedAt    time.Time `sql:"default:now()" json:"-"`
+	UpdatedAt    time.Time `sql:"default:now()" json:"-"`
 }
 
 type UpdateUser struct {

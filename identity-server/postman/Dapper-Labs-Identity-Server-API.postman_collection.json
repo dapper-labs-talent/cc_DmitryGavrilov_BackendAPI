@@ -1,0 +1,143 @@
+{
+	"id": "e4d6e42d-7d0f-90c8-efa0-852f966c6190",
+	"name": "Dapper-Labs-Identity-Server-API",
+	"description": "",
+	"order": [
+		"820d8e06-694a-1531-3c9b-dcab47809c73",
+		"38ece582-c125-c9c5-f603-87a2fbd6964c",
+		"2e43975b-dd9f-5693-e59d-2d0a3f171028",
+		"4c80ca05-54d3-cc42-4abe-39154846230e"
+	],
+	"folders": [],
+	"folders_order": [],
+	"timestamp": 1658277146207,
+	"owner": 0,
+	"public": false,
+	"requests": [
+		{
+			"id": "2e43975b-dd9f-5693-e59d-2d0a3f171028",
+			"headers": "X-Authentication-Token: {{token}}\n",
+			"headerData": [
+				{
+					"key": "X-Authentication-Token",
+					"value": "{{token}}",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://{{url}}/v1/users",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "GET",
+			"data": null,
+			"dataMode": "params",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1658436530344,
+			"name": "Get Users",
+			"description": "",
+			"collectionId": "e4d6e42d-7d0f-90c8-efa0-852f966c6190",
+			"responses": []
+		},
+		{
+			"id": "38ece582-c125-c9c5-f603-87a2fbd6964c",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://{{url}}/v1/login",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": "var jsonData = JSON.parse(responseBody);\npostman.setEnvironmentVariable(\"token\", jsonData.token);",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1658436753181,
+			"name": "Login",
+			"description": "",
+			"collectionId": "e4d6e42d-7d0f-90c8-efa0-852f966c6190",
+			"responses": [],
+			"rawModeData": "{\n\t\"password\" : \"jackpassword\",\n\t\"email\":\"jack@gmail.com\"\n}"
+		},
+		{
+			"id": "4c80ca05-54d3-cc42-4abe-39154846230e",
+			"headers": "Content-Type: application/json\nX-Authentication-Token: {{token}}\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				},
+				{
+					"key": "X-Authentication-Token",
+					"value": "{{token}}",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://{{url}}/v1/users",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "PUT",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1658436743667,
+			"name": "Update User",
+			"description": "",
+			"collectionId": "e4d6e42d-7d0f-90c8-efa0-852f966c6190",
+			"responses": [],
+			"rawModeData": "{\n\t\"firstname\":\"Jack junior\",\n\t\"lastname\":\"Wolfgang junior\"\n}"
+		},
+		{
+			"id": "820d8e06-694a-1531-3c9b-dcab47809c73",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://{{url}}/v1/signup",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1658436754229,
+			"name": "Create User",
+			"description": "",
+			"collectionId": "e4d6e42d-7d0f-90c8-efa0-852f966c6190",
+			"responses": [],
+			"rawModeData": "{\n\t\"firstname\":\"Jack\",\n\t\"lastname\":\"Wolfgang\",\n\t\"email\":\"jack@gmail.com\",\n\t\"password\" : \"jackpassword\"\n}"
+		}
+	]
+}

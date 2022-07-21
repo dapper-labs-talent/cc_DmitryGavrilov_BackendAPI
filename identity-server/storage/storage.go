@@ -1,6 +1,9 @@
 package storage
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/dapper-labs/identity-server/config"
 	"github.com/dapper-labs/identity-server/model"
 )
@@ -12,18 +15,20 @@ type UserRepository interface {
 	UpdateUserWithEmail(*model.UpdateUser, string) error
 }
 
+type Migrator interface {
+	CreateSchema() error
+}
+
 func NewUserRepository(config *config.Config) (UserRepository, error) {
 	if config.Driver == "memory" {
-		return createInMemoryRepo()
+		return &inMemoryUserRepository{users: make(map[string]model.User)}, nil
+	} else if config.Driver == "postgres" {
+		return NewPostgresUserRepository(config)
 	} else {
-		return createDBRepo(config)
+		return nil, errors.New(fmt.Sprintf("driver %s is not supported", config.Driver))
 	}
 }
 
-func createInMemoryRepo() (UserRepository, error) {
-	return &inMemoryUserRepository{users: make(map[string]model.User)}, nil
-}
-
-func createDBRepo(config *config.Config) (UserRepository, error) {
-	return nil, nil
+func NewMigrator(config *config.Config) (Migrator, error) {
+	return createPosgressMigrator(config)
 }

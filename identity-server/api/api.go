@@ -27,12 +27,11 @@ const (
 	MaxShutdownTimeoutInSeconds = 60
 )
 
-func (api *API) ListenAndServe() error {
-
-	address := fmt.Sprintf("0.0.0.0:%d", api.config.ListenPort)
+func (api *API) ListenAndServe(address string) error {
 
 	server := &http.Server{
 		Handler: api.mux,
+		Addr:    address,
 	}
 
 	shutdown := make(chan struct{})
@@ -56,6 +55,7 @@ func (api *API) ListenAndServe() error {
 		server.Shutdown(ctx)
 	}()
 
+	logrus.Infof("Identity server listening at: %s", address)
 	err := server.ListenAndServe()
 	if err != http.ErrServerClosed {
 		logrus.Error(errors.Wrap(err, fmt.Sprintf("cannot start server at %s", address)))

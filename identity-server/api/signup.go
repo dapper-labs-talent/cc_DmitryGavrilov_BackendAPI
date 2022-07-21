@@ -7,6 +7,7 @@ import (
 
 	"github.com/dapper-labs/identity-server/mail"
 	"github.com/dapper-labs/identity-server/model"
+	"github.com/dapper-labs/identity-server/storage"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -50,6 +51,11 @@ func (api *API) SignUp(w http.ResponseWriter, r *http.Request) error {
 	err = api.userRep.Insert(user)
 	if err != nil {
 		logrus.Error(errors.Wrap(err, "failed to insert a new user"))
+
+		if err == storage.ErrorUserAlreadyExist {
+			return badRequestError(err.Error())
+		}
+
 		return internalServerError("cannot persist a new user, please contact administrator")
 	}
 
