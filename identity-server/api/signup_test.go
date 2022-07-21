@@ -68,7 +68,7 @@ func (s *TestSignUpSuite) TestSignUp_ValidaUser_Ok_Expected() {
 	s.Assert().Equal(http.StatusOK, signUpResponse.Code)
 	s.Assert().NotEmpty(signUpResponse.Token)
 
-	assertToken(s.Assert(), signUpResponse.Token, user.Email, s.api.config.Secret)
+	assertToken(s.Assert(), s.api, signUpResponse.Token, user.Email)
 }
 
 func (s *TestSignUpSuite) TestSignUp_EmptyPassword_BadRequest_Expected() {

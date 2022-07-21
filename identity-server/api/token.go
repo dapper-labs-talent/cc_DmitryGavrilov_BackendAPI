@@ -12,11 +12,11 @@ type jwtToken struct {
 	Email string
 }
 
-func parseJwtToken(token string, secret string) (*jwt.Token, error) {
+func (api *API) parseJwtToken(token string) (*jwt.Token, error) {
 
 	p := jwt.Parser{ValidMethods: []string{jwt.SigningMethodHS256.Name}}
 	ptoken, err := p.ParseWithClaims(token, &jwtToken{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(secret), nil
+		return []byte(api.config.JWT.Secret), nil
 	})
 	if err != nil {
 		return nil, err

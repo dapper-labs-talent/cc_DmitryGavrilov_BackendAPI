@@ -57,5 +57,8 @@ func (api *API) SignUp(w http.ResponseWriter, r *http.Request) error {
 	token, err := newJwtToken(user, nsecs, api.config.JWT.Secret)
 
 	err = writeJSON(w, http.StatusOK, UserSignUpResponse{Token: token, Code: http.StatusOK})
+	if err != nil {
+		logrus.Error(errors.Wrap(err, "could not write response"))
+	}
 	return err
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/dapper-labs/identity-server/config"
 	"github.com/dapper-labs/identity-server/model"
 	"github.com/dapper-labs/identity-server/storage"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -54,9 +55,9 @@ func TestLoginTestSuite(t *testing.T) {
 	suite.Run(t, &TestLoginSuite{})
 }
 
-func (s *TestLoginSuite) TestLogin_ValidUser_Ok_Expected() {
+func loginRequest(email string, password string, mux *chi.Mux) *http.Response {
 	w := httptest.NewRecorder()
-	user := UserLogin{Email: "1test_email@fake.com", Password: "pwd1"}
+	user := UserLogin{Email: email, Password: password}
 	buffer, err := convert(user)
 	if err != nil {
 		panic(err)
@@ -66,11 +67,16 @@ func (s *TestLoginSuite) TestLogin_ValidUser_Ok_Expected() {
 		panic(err)
 	}
 	req.Header.Set(HeaderContentType, ContentTypeJSON)
-	s.api.mux.ServeHTTP(w, req)
+	mux.ServeHTTP(w, req)
+	return w.Result()
+}
 
-	s.Assert().Equal(http.StatusOK, w.Result().StatusCode)
+func (s *TestLoginSuite) TestLogin_ValidUser_Ok_Expected() {
+	resp := loginRequest("1test_email@fake.com", "pwd1", s.api.mux)
 
-	respBody, err := ioutil.ReadAll(w.Result().Body)
+	s.Assert().Equal(http.StatusOK, resp.StatusCode)
+
+	respBody, err := ioutil.ReadAll(resp.Body)
 	s.Assert().Nil(err)
 
 	response := UserLoginResponse{}
@@ -79,26 +85,14 @@ func (s *TestLoginSuite) TestLogin_ValidUser_Ok_Expected() {
 	s.Assert().Equal(http.StatusOK, response.Code)
 	s.Assert().NotEmpty(response.Token)
 
-	assertToken(s.Assert(), response.Token, user.Email, s.api.config.Secret)
+	assertToken(s.Assert(), s.api, response.Token, "1test_email@fake.com")
 }
 
 func (s *TestLoginSuite) TestLogin_UnknownUser_401_Expected() {
-	w := httptest.NewRecorder()
-	user := UserLogin{Email: "0test_email@fake.com", Password: "pwd1"}
-	buffer, err := convert(user)
-	if err != nil {
-		panic(err)
-	}
-	req, err := http.NewRequest(http.MethodPost, "/v1/login", buffer)
-	if err != nil {
-		panic(err)
-	}
-	req.Header.Set(HeaderContentType, ContentTypeJSON)
-	s.api.mux.ServeHTTP(w, req)
+	resp := loginRequest("0test_email@fake.com", "pwd1", s.api.mux)
+	s.Assert().Equal(http.StatusUnauthorized, resp.StatusCode)
 
-	s.Assert().Equal(http.StatusUnauthorized, w.Result().StatusCode)
-
-	respBody, err := ioutil.ReadAll(w.Result().Body)
+	respBody, err := ioutil.ReadAll(resp.Body)
 	s.Assert().Nil(err)
 
 	response := HttpErrorResponse{}
@@ -109,22 +103,10 @@ func (s *TestLoginSuite) TestLogin_UnknownUser_401_Expected() {
 }
 
 func (s *TestLoginSuite) TestLogin_WrongPassword_401_Expected() {
-	w := httptest.NewRecorder()
-	user := UserLogin{Email: "1test_email@fake.com", Password: "pwd2"}
-	buffer, err := convert(user)
-	if err != nil {
-		panic(err)
-	}
-	req, err := http.NewRequest(http.MethodPost, "/v1/login", buffer)
-	if err != nil {
-		panic(err)
-	}
-	req.Header.Set(HeaderContentType, ContentTypeJSON)
-	s.api.mux.ServeHTTP(w, req)
+	resp := loginRequest("1test_email@fake.com", "pwd2", s.api.mux)
+	s.Assert().Equal(http.StatusUnauthorized, resp.StatusCode)
 
-	s.Assert().Equal(http.StatusUnauthorized, w.Result().StatusCode)
-
-	respBody, err := ioutil.ReadAll(w.Result().Body)
+	respBody, err := ioutil.ReadAll(resp.Body)
 	s.Assert().Nil(err)
 
 	response := HttpErrorResponse{}
@@ -135,22 +117,11 @@ func (s *TestLoginSuite) TestLogin_WrongPassword_401_Expected() {
 }
 
 func (s *TestLoginSuite) TestLogin_EmptyPassword_400_Expected() {
-	w := httptest.NewRecorder()
-	user := UserLogin{Email: "1test_email@fake.com", Password: ""}
-	buffer, err := convert(user)
-	if err != nil {
-		panic(err)
-	}
-	req, err := http.NewRequest(http.MethodPost, "/v1/login", buffer)
-	if err != nil {
-		panic(err)
-	}
-	req.Header.Set(HeaderContentType, ContentTypeJSON)
-	s.api.mux.ServeHTTP(w, req)
 
-	s.Assert().Equal(http.StatusBadRequest, w.Result().StatusCode)
+	resp := loginRequest("1test_email@fake.com", "", s.api.mux)
+	s.Assert().Equal(http.StatusBadRequest, resp.StatusCode)
 
-	respBody, err := ioutil.ReadAll(w.Result().Body)
+	respBody, err := ioutil.ReadAll(resp.Body)
 	s.Assert().Nil(err)
 
 	response := HttpErrorResponse{}
@@ -161,22 +132,11 @@ func (s *TestLoginSuite) TestLogin_EmptyPassword_400_Expected() {
 }
 
 func (s *TestLoginSuite) TestLogin_EmptyEmail_400_Expected() {
-	w := httptest.NewRecorder()
-	user := UserLogin{Email: "", Password: "pwd1"}
-	buffer, err := convert(user)
-	if err != nil {
-		panic(err)
-	}
-	req, err := http.NewRequest(http.MethodPost, "/v1/login", buffer)
-	if err != nil {
-		panic(err)
-	}
-	req.Header.Set(HeaderContentType, ContentTypeJSON)
-	s.api.mux.ServeHTTP(w, req)
+	resp := loginRequest("", "pwd1", s.api.mux)
 
-	s.Assert().Equal(http.StatusBadRequest, w.Result().StatusCode)
+	s.Assert().Equal(http.StatusBadRequest, resp.StatusCode)
 
-	respBody, err := ioutil.ReadAll(w.Result().Body)
+	respBody, err := ioutil.ReadAll(resp.Body)
 	s.Assert().Nil(err)
 
 	response := HttpErrorResponse{}
@@ -186,8 +146,8 @@ func (s *TestLoginSuite) TestLogin_EmptyEmail_400_Expected() {
 	s.Assert().Equal("the provided email has incorrect format", response.ErrorMessage)
 }
 
-func assertToken(a *assert.Assertions, token, expectedEmail, secret string) {
-	jtoken, err := parseJwtToken(token, secret)
+func assertToken(a *assert.Assertions, api *API, token, expectedEmail string) {
+	jtoken, err := api.parseJwtToken(token)
 	a.Nil(err)
 	a.NotNil(token)
 	a.True(jtoken.Valid)

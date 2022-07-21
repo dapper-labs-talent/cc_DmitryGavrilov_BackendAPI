@@ -83,8 +83,12 @@ func NewAPI(config *config.Config) (*API, error) {
 	router.Route("/v1", func(r chi.Router) {
 		r.Post("/signup", handler(api.SignUp))
 		r.Post("/login", handler(api.Login))
-		r.Get("/users", handler(api.GetUsers))
-		r.Put("/users", handler(api.UpdateUser))
+
+		r.Route("/users", func(r chi.Router) {
+			r.Use(api.BearerAuth)
+			r.Get("/", handler(api.GetUsers))
+			r.Put("/", handler(api.UpdateUser))
+		})
 	})
 
 	return api, nil

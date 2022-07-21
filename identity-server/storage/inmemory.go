@@ -30,7 +30,12 @@ func (r *inMemoryUserRepository) Insert(user *model.User) error {
 }
 
 func (r *inMemoryUserRepository) GetUsers() (*[]model.User, error) {
-	return nil, nil
+	res := make([]model.User, 0)
+	for _, user := range r.users {
+		res = append(res, user)
+	}
+
+	return &res, nil
 }
 
 func (r *inMemoryUserRepository) GetUserWithEmail(email string) (*model.User, error) {
