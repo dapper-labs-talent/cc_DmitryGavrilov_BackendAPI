@@ -28,12 +28,11 @@ func migrate(config *config.Config) {
 
 	err = migrator.CreateSchema()
 	if err != nil {
-		logrus.Fatalf("could not finish database migration %v", err)
+		logrus.Fatalf("could not finish database migration: %v", err)
 	}
 	err = migrator.Close()
 	if err != nil {
-		logrus.Error(err)
-		logrus.Fatal("could not finish the close operation of a database migrator")
+		logrus.Fatalf("could not finish the close operation of a database migrator: %v", err)
 	}
 
 	logrus.Info("Database migration completed")
