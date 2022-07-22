@@ -33,7 +33,6 @@ func NewPostgresUserRepository(config *config.Config) (*postgresUserRepository, 
 	if err != nil {
 		return nil, err
 	}
-
 	return &postgresUserRepository{conn: conn}, nil
 }
 
@@ -99,14 +98,18 @@ func (pur *postgresUserRepository) UpdateUserWithEmail(updateUser *model.UpdateU
 	return nil
 }
 
+func (pur *postgresUserRepository) Close() error {
+	logrus.Info("Closing postgres connection")
+	return pur.conn.Close()
+}
+
 func (pm *postgresMigrator) CreateSchema() error {
 
 	logrus.Info("Starting db schema creation")
-
 	models := []interface{}{
 		(*model.User)(nil),
 	}
-	defer pm.conn.Close()
+
 	for _, model := range models {
 		err := pm.conn.Model(model).CreateTable(&orm.CreateTableOptions{
 			IfNotExists: true,
@@ -118,6 +121,10 @@ func (pm *postgresMigrator) CreateSchema() error {
 
 	logrus.Info("Db schema created")
 	return nil
+}
+
+func (pm *postgresMigrator) Close() error {
+	return pm.conn.Close()
 }
 
 func createPosgressMigrator(config *config.Config) (Migrator, error) {

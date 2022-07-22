@@ -34,9 +34,6 @@ func (api *API) ListenAndServe(address string) error {
 		Addr:    address,
 	}
 
-	shutdown := make(chan struct{})
-	defer close(shutdown)
-
 	go func() {
 
 		timeout := api.config.Server.Timeout
@@ -45,13 +42,19 @@ func (api *API) ListenAndServe(address string) error {
 		}
 
 		sigchan := make(chan os.Signal, 1)
+		defer close(sigchan)
+
 		signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+
 		select {
 		case sig := <-sigchan:
 			logrus.Info(fmt.Sprintf("received os signal - %s, triggering server shutdown", sig))
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+		api.userRep.Close()
 		defer cancel()
+
+		logrus.Info("Shutting down the identity http server")
 		server.Shutdown(ctx)
 	}()
 

@@ -70,3 +70,8 @@ func (r *inMemoryUserRepository) UpdateUserWithEmail(updateUser *model.UpdateUse
 	r.users[email] = user
 	return nil
 }
+
+func (r *inMemoryUserRepository) Close() error {
+	r.users = make(map[string]model.User)
+	return nil
+}

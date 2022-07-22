@@ -13,10 +13,12 @@ type UserRepository interface {
 	GetUsers() (*[]model.User, error)
 	GetUserWithEmail(email string) (*model.User, error)
 	UpdateUserWithEmail(*model.UpdateUser, string) error
+	Close() error
 }
 
 type Migrator interface {
 	CreateSchema() error
+	Close() error
 }
 
 func NewUserRepository(config *config.Config) (UserRepository, error) {
