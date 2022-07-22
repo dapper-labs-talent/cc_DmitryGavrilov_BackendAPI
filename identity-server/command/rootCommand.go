@@ -28,5 +28,7 @@ func executeCommand(fh func(*config.Config)) {
 	if err != nil {
 		logrus.Fatal(errors.Wrap(err, "cannot read configuration file"))
 	}
+	logrus.SetLevel(logrus.Level(config.LogLevel))
+
 	fh(config)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	DefaultLogLevel      = 3     // INFO log level
+	DefaultLogLevel      = 4     // logrus INFO log level
 	DefaultJWTExpiration = 86400 // 1 day in seconds
 	DefaultListenPort    = 8080
 )
@@ -17,6 +17,7 @@ type Config struct {
 	Database
 	JWT
 	Logging
+	*TokenCookie
 }
 
 type JWT struct {
@@ -40,6 +41,11 @@ type Server struct {
 
 type Logging struct {
 	LogLevel int `mapstructure:"log_level"`
+}
+
+type TokenCookie struct {
+	Key      string `mapstructure:"cookie_key"`
+	Duration int    `mapstructure:"cookie_duration"`
 }
 
 func LoadConfigWithPath(path string) (*Config, error) {
