@@ -17,7 +17,6 @@ type Config struct {
 	Database
 	JWT
 	Logging
-	*TokenCookie
 }
 
 type JWT struct {
@@ -41,11 +40,6 @@ type Server struct {
 
 type Logging struct {
 	LogLevel int `mapstructure:"log_level"`
-}
-
-type TokenCookie struct {
-	Key      string `mapstructure:"cookie_key"`
-	Duration int    `mapstructure:"cookie_duration"`
 }
 
 func LoadConfigWithPath(path string) (*Config, error) {
