@@ -62,7 +62,7 @@ func (api *API) SignUp(w http.ResponseWriter, r *http.Request) error {
 	nsecs := time.Second * 60 * time.Duration(api.config.Expiration)
 	token, err := newJwtToken(user, nsecs, api.config.JWT.Secret)
 
-	err = writeJSON(w, http.StatusOK, UserSignUpResponse{Token: token, Code: http.StatusOK})
+	err = writeJSON(w, http.StatusCreated, UserSignUpResponse{Token: token, Code: http.StatusOK})
 	if err != nil {
 		logrus.Error(errors.Wrap(err, "could not write response"))
 	}
