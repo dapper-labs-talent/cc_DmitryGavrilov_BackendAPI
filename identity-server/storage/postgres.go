@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/dapper-labs/identity-server/config"
 	"github.com/dapper-labs/identity-server/model"
@@ -90,6 +91,8 @@ func (pur *postgresUserRepository) UpdateUserWithEmail(updateUser *model.UpdateU
 	if updateUser.Lastname != "" {
 		user.Lastname = updateUser.Lastname
 	}
+
+	user.UpdatedAt = time.Now()
 	_, err := pur.conn.Model(user).Where("email = ?", email).UpdateNotNull()
 	if err != nil {
 		logrus.Error(err)

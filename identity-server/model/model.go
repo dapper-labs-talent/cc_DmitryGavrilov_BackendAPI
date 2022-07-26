@@ -12,8 +12,8 @@ type User struct {
 	PasswordHash string    `pg:"password_hash" json:"-"`
 	Firstname    string    `json:"firstname"`
 	Lastname     string    `json:"lastname"`
-	CreatedAt    time.Time `sql:"default:now()" json:"-"`
-	UpdatedAt    time.Time `sql:"default:now()" json:"-"`
+	CreatedAt    time.Time `json:"-"`
+	UpdatedAt    time.Time `json:"-"`
 }
 
 type UpdateUser struct {
@@ -32,11 +32,15 @@ func NewUser(firstname string, lastname string, email string, password string) (
 		return nil, err
 	}
 
+	now := time.Now()
+
 	user := &User{
 		Firstname:    firstname,
 		Lastname:     lastname,
 		Email:        email,
 		PasswordHash: ph,
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	}
 	return user, nil
 }
